@@ -1,0 +1,45 @@
+language: php
+services:
+  - mysql
+branches:
+  only:
+    - master
+env:
+  MYSQL_ROOT_PASSWORD: root
+
+before_install:
+  - which sqld || echo "no mysql"
+  - systemctl status mysql || echo "no status"
+  - echo "[mysqld]"
+  - sudo systemctl start mysql || echo "no start"
+
+install:
+  - composer require --dev php-coveralls/php-coveralls
+
+before_script:
+  - mysql -u root -e 'CREATE DATABASE testDB;'
+  - mysql -u root -e "CREATE USER 'moodledude'@'localhost' IDENTIFIED BY 'password'";
+  - mysql -u root -e "GRANT ALL ON testDB.* TO 'moodledude'@'localhost';"
+  - mysql -u root -e "SHOW DATABASES"
+  - mysql -u root -e "USE testDB;CREATE TABLE ams_emulators(id int NOT NULL AUTO_INCREMENT,emulator_id varchar(100) DEFAULT NULL,state varchar(100) DEFAULT NULL,in_use varchar(10) DEFAULT NULL,PRIMARY KEY (id));"
+  - mysql -u root -e "USE testDB;CREATE TABLE ams_submissions(user_id INT NOT NULL AUTO_INCREMENT,assignment INT NOT NULL ,status VARCHAR(20),submission_type VARCHAR(20),priority INT,PRIMARY KEY (user_id));"
+  - mysql -u root -e "USE testDB;CREATE TABLE feedback_marker(id INT(11) NOT NULL AUTO_INCREMENT,assignment_id INT(11) NOT NULL,user_id INT(11) NOT NULL,submission_id INT(11) NOT NULL,priority INT(11) NOT NULL,status VARCHAR(50) NOT NULL,PRIMARY KEY (id)) ENGINE = InnoDB;"
+  - mysql -u root -e "USE testDB;CREATE TABLE feedback_error(id INT(11) NOT NULL AUTO_INCREMENT,assignment INT(11) NOT NULL,userid       INT(11)  NOT NULL,columnnumber INT(11)  NOT NULL,linenumber   INT(11)  NOT NULL,message LONGTEXT NOT NULL,position INT(11)  NOT NULL, filename LONGTEXT NOT NULL,PRIMARY KEY (id)) ENGINE = InnoDB;"
+  - mysql -u root -e "USE testDB;CREATE TABLE feedback_testresult(id INT(11) NOT NULL AUTO_INCREMENT,assignment INT(11) NOT NULL,userid     INT(11)     NOT NULL,testname   VARCHAR(50) NOT NULL,resultLONGTEXT NOT NULL,PRIMARY KEY (id)) ENGINE = InnoDB;"
+  - mysql -u root -e "USE testDB;DESC ams_emulators"
+  - mysql -u root -e "USE testDB;DESC ams_submissions"
+  - mysql -u root -e "USE testDB;DESC feedback_marker"
+  - mysql -u root -e "USE testDB;INSERT INTO ams_emulators(emulator_id, state, in_use) VALUES ('WCYC4C18809001072','device','false'),('ZBYA4C14405981207','device','true');"
+  - mysql -u root -e "USE testDB;INSERT INTO ams_submissions(assignment,status,submission_type,priority) VALUES (1,'New','Student',1),(1,'New','Student',1);"
+  - mysql -u root -e "USE testDB;INSERT INTO feedback_marker(id,assignment_id,user_id,submission_id,priority,status) VALUES(1,20,2,58,-1,'Pending');"
+  - mkdir -p build/logs
+  - curl -s https://getcomposer.org/installer | php
+  - travis_retry composer self-update
+  - travis_retry composer install --no-interaction --prefer-source --dev
+
+script:
+  - vendor/bin/phpunit --coverage-clover build/logs/clover.xml
+
+after_success:
+  - travis_retry php vendor/bin/php-coveralls
+  - travis_retry php vendor/bin/php-coveralls -v

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpunit colors="true">
+    <testsuites>
+        <testsuite name="Android Marker Tests">
+            <directory>./androidMarker/Test</directory>
+        </testsuite>
+        <testsuite name="Server Integration Tests">
+            <directory>./php/Test</directory>
+        </testsuite>
+    </testsuites>
+
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">androidMarker/</directory>
+        </whitelist>
+    </filter>
+
+    <php>
+        <var name="DB_DSN" value="mysql:dbname=testDB;host=localhost"></var>
+        <var name="DB_USER" value="moodledude"></var>
+        <var name="DB_PASSWD" value="password"></var>
+        <var name="DB_DBNAME" value="testDB"></var>
+    </php>
+</phpunit>
