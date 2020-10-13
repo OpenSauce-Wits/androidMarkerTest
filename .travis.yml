@@ -1,9 +1,6 @@
 language: php
 services:
   - mysql
-branches:
-  only:
-    - master
 env:
   MYSQL_ROOT_PASSWORD: root
 
